@@ -264,7 +264,7 @@ module.exports = function(app){
                                 });
                             }
                         }
-                        /*  CLEANING LOOP */
+                        /* end of cleaning */
     
                         //  now that it's clean, resolve!
                         resolve(xlf_proposed_obj);
@@ -276,24 +276,26 @@ module.exports = function(app){
     
             function ingot_barcode(){ // promise function for barcode
                 return new Promise(function(resolve, reject){
-                    if(typeof post_xlf[0]['Ingot Lot Barcodes'] !== 'undefined' && post_xlf[0]['Ingot Lot Barcodes'] !== null && post_xlf[0]['Ingot Lot Barcodes'] > 0){
-                        //  Ingot lot Barcode loop starting 2nd array
-                        for(let i=1; i<post_xlf[0]['Ingot Lot Barcodes']; i++){
-                            if(typeof post_xlf[0]['Ingot Lot Barcodes'][i] !== 'undefined'){
-                                console.log(post_xlf[0]['Ingot Lot Barcodes'][i]);
-                                //  do something with the barcode obj
-                            }
+                    if(typeof post_xlf[1]['Ingot Lot Barcodes'] !== 'undefined' && post_xlf[1]['Ingot Lot Barcodes'] !== null && post_xlf[1]['Ingot Lot Barcodes'] > 0){
+                        
+                        /* CLEANING LOOP */
+                        for(i<1;i<post_xlf[1]['Ingot Lot Barcodes'].length;i++){
+                           // I'M TIRED
+                           // CLEAN this 
                         }
+                        /* end of cleaning */
     
                     } else {
-                        res.send(JSON.stringify('Error: Upload the required CofA File'));
+                        res.send(JSON.stringify('Error @ ingot barcode: Upload the required CofA File'));
                     }
                 });
             }
+
+            ingot_barcode();
     
             /* Promise Invoker */
             proposed_cofa().then(function(xlf_proposed_obj){
-    
+                
                 //  preparing for upload
                 for(let i=0;i<xlf_proposed_obj.length;i++){
                     if(typeof xlf_proposed_obj[i].ingot_lot_id !== 'undefined' && xlf_proposed_obj[i].ingot_lot_id !== null && xlf_proposed_obj[i].ingot_lot_id.length > 0){
