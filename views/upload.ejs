@@ -23,10 +23,10 @@
                 <hr class="colorgraph"><br>
                 <div class="header_div" style="padding-bottom:20px;">
                     <div class="order_no_div" style="padding-bottom:15px;">
-                        <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57' class="form-control" id="order_no" name="order_no" placeholder="Invoice Number"/>
+                        <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57' class="form-control" id="order_no" name="order_no" placeholder="Invoice number"/>
                     </div>
                     <div class='input-group date' name='datetimepicker1' id='datetimepicker1' style="padding-bottom:15px;">
-                        <input type='text' class="form-control" id="delivery_date" name="delivery_date" placeholder="Delivery Date"/>
+                        <input type='text' class="form-control" id="delivery_date" name="delivery_date" placeholder="Delivery date"/>
                         <span class="input-group-addon">
                             <span class="glyphicon glyphicon-calendar"></span>
                         </span>
@@ -40,7 +40,7 @@
                         <!--use ejs here from supplier list table for select input-->
                         <select class="form-control" id="supplier_id" name="supplier_id">
                             <!--ejs loop here-->
-                            <option selected="true" disabled="disabled" >Choose Supplier Name</option>
+                            <option selected="true" disabled="disabled" >Select supplier name</option>
                             <% for(let i=0; i<supplier_obj.length;i++){ %>
                                 <option value="<%= supplier_obj[i].supplier_id %>">
                                     <%= supplier_obj[i].supplier_name %>

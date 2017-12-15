@@ -19,16 +19,52 @@ module.exports = function(app){
         let xlf_proposed_obj = [];   //  cleaned obj going to db
         let xlf_barcode_obj = [];   //  "   "   "   "
 
-        //console.log(post_xlf.xlf['Ingot Lot Barcodes']);
+        //console.log(post_xlf.header[0]['value']);
         
         if(!post_xlf){
             res.send(JSON.stringify('Error: Upload the required CofA file'));
         } else {
 
+            function form_details(){ // promise function for header :)
+                return new Promise(function(resolve, reject){
+
+                    //  make sure no null here
+                    if(typeof post_xlf.header[0]['value'] !== 'undefined' && post_xlf.header[0]['value'] !== null || typeof post_xlf.header[1]['value'] !== 'undefined' && post_xlf.header[1]['value'] !== null || typeof post_xlf.header[2]['value'] !== 'undefined' && post_xlf.header[2]['value'] !== null) {
+
+                        let form_details_obj = [];
+                        let dDate = post_xlf.header[1]['value'];
+
+                        form_details_obj.push({
+                            supplier_id: post_xlf.header[2]['value'],
+                            delivery_date:  moment(new Date(dDate)).format('YYYY-MM-DD H:mm:ss'),
+                            order_no:   post_xlf.header[0]['value']
+                        });
+
+                        /*
+                        //  check order number if exist before uploading
+                        //  this should prevent user from double entry
+                        mysqlLocal.getConnection(function(err, connection){
+                            connection.query({
+                                sql: 'SELECT order_no FROM tbl_proposed_cofa WHERE order_no=?',
+                                values:[form_details_obj[0].order_no]
+                            },  function(err, results, fields){
+                            
+                                if(typeof results[0].order_no !== 'undefined' && results[0].order_no !== null){
+
+                                }
+
+                            }); 
+                            connection.release();
+                        });
+                        */
+                    }
+                });
+            }
+
             function proposed_cofa(){ // promise function for proposed cofa
                 return new Promise(function(resolve, reject){
     
-                    //  check if the file is CofA.
+                    //  check if the file is CofA and has.
                     if(typeof post_xlf.xlf['PROPOSED CofA'] !== 'undefined' && post_xlf.xlf['PROPOSED CofA'] !== null && post_xlf.xlf['PROPOSED CofA'].length > 0){
     
                         /*  CLEANING LOOP */
@@ -297,7 +333,7 @@ module.exports = function(app){
 
                         //  resolve cleaned object
                         resolve(xlf_barcode_obj);
-                        console.log(xlf_barcode_obj);
+                       // console.log(xlf_barcode_obj);
     
                     } else {
                         res.send(JSON.stringify('Error @ ingot barcode: Upload the required CofA File'));
@@ -307,49 +343,52 @@ module.exports = function(app){
 
     
             /* Promise Invoker */
-            proposed_cofa().then(function(xlf_proposed_obj){
-                return ingot_barcode().then(function(xlf_barcode_obj){
-                    //  preparing for upload proposed cofa sheet
-                    for(let i=0;i<xlf_proposed_obj.length;i++){
-                        if(typeof xlf_proposed_obj[i].ingot_lot_id !== 'undefined' && xlf_proposed_obj[i].ingot_lot_id !== null && xlf_proposed_obj[i].ingot_lot_id.length > 0){
-                            //  to database table tbl_proposed_cofa
-                            mysqlLocal.getConnection(function(err,  connection){
-                                connection.query({
-                                    sql:'INSERT INTO tbl_proposed_cofa SET ingot_lot_id=?, box_no=?,pallet_no=?,location=?,wafer_qty=?,distance_torm_top=?,length=?,top_end_length=?,MCLT_Top=?,MCLT_Tail=?,MCLT_LSL=?,RES_top=?,RES_tail=?,RES_USL=?,RES_LSL=?,OI_top=?,OI_tail=?,OI_USL=?,CS_top=?,CS_tail=?,CS_USL=?,DIA_ave=?,DIA_std=?,DIA_min=?,DIA_max=?,DIA_USL=?,DIA_LSL=?,FLAT_width_ave=?,FLAT_width_std=?,FLAT_width_min=?,FLAT_width_max=?,FLAT_width_USL=?,FLAT_width_LSL=?,FLAT_length_taper1=?,FLAT_length_taper2=?,FLAT_length_min=?,FLAT_length_max=?,FLAT_length_USL=?,CORNER_length_ave=?,CORNER_length_std=?,CORNER_length_min=?,CORNER_length_max=?,CORNER_length_USL=?,CORNER_length_LSL=?,CENTER_thickness_ave=?,CENTER_thickness_std=?,CENTER_thickness_min=?,CENTER_thickness_max=?,CENTER_thickness_USL=?,CENTER_thickness_LSL=?,TTV_ave=?,TTV_std=?,TTV_min=?,TTV_max=?,TTV_USL=?,RA_ave=?,RA_std=?,RA_min=?,RA_max=?,RA_USL=?,RZ_ave=?,RZ_std=?,RZ_min=?,RZ_max=?,RZ_USL=?,VERTICAL_ave=?,VERTICAL_std=?,VERTICAL_min=?,VERTICAL_max=?,VERTICAL_USL=?,VERTICAL_LSL=?,Copper_content=?,Iron_content=?,DoesAcceptorReject=?,Upload_time=?',
-                                    values: [xlf_proposed_obj[i].ingot_lot_id, xlf_proposed_obj[i].box_no, xlf_proposed_obj[i].pallet_no, xlf_proposed_obj[i].location, xlf_proposed_obj[i].wafer_qty, xlf_proposed_obj[i].distance_torm_top, xlf_proposed_obj[i].length, xlf_proposed_obj[i].top_end_length, xlf_proposed_obj[i].MCLT_Top, xlf_proposed_obj[i].MCLT_Tail, xlf_proposed_obj[i].MCLT_LSL, xlf_proposed_obj[i].RES_top, xlf_proposed_obj[i].RES_tail, xlf_proposed_obj[i].RES_USL, xlf_proposed_obj[i].RES_LSL, xlf_proposed_obj[i].OI_top, xlf_proposed_obj[i].OI_tail, xlf_proposed_obj[i].OI_USL, xlf_proposed_obj[i].CS_top, xlf_proposed_obj[i].CS_tail, xlf_proposed_obj[i].CS_USL, xlf_proposed_obj[i].DIA_ave, xlf_proposed_obj[i].DIA_std, xlf_proposed_obj[i].DIA_min, xlf_proposed_obj[i].DIA_max, xlf_proposed_obj[i].DIA_USL, xlf_proposed_obj[i].DIA_LSL, xlf_proposed_obj[i].FLAT_width_ave, xlf_proposed_obj[i].FLAT_width_std, xlf_proposed_obj[i].FLAT_width_min, xlf_proposed_obj[i].FLAT_width_max, xlf_proposed_obj[i].FLAT_width_USL, xlf_proposed_obj[i].FLAT_width_LSL, xlf_proposed_obj[i].FLAT_length_taper1, xlf_proposed_obj[i].FLAT_length_taper2, xlf_proposed_obj[i].FLAT_length_min, xlf_proposed_obj[i].FLAT_length_max, xlf_proposed_obj[i].FLAT_length_USL, xlf_proposed_obj[i].CORNER_length_ave, xlf_proposed_obj[i].CORNER_length_std, xlf_proposed_obj[i].CORNER_length_min, xlf_proposed_obj[i].CORNER_length_max, xlf_proposed_obj[i].CORNER_length_USL, xlf_proposed_obj[i].CORNER_length_LSL, xlf_proposed_obj[i].CENTER_thickness_ave, xlf_proposed_obj[i].CENTER_thickness_std, xlf_proposed_obj[i].CENTER_thickness_min, xlf_proposed_obj[i].CENTER_thickness_max, xlf_proposed_obj[i].CENTER_thickness_USL, xlf_proposed_obj[i].CENTER_thickness_LSL, xlf_proposed_obj[i].TTV_ave, xlf_proposed_obj[i].TTV_std, xlf_proposed_obj[i].TTV_min, xlf_proposed_obj[i].TTV_max, xlf_proposed_obj[i].TTV_USL, xlf_proposed_obj[i].RA_ave, xlf_proposed_obj[i].RA_std, xlf_proposed_obj[i].RA_min, xlf_proposed_obj[i].RA_max, xlf_proposed_obj[i].RA_USL, xlf_proposed_obj[i].RZ_ave, xlf_proposed_obj[i].RZ_std, xlf_proposed_obj[i].RZ_min, xlf_proposed_obj[i].RZ_max, xlf_proposed_obj[i].RZ_USL, xlf_proposed_obj[i].VERTICAL_ave, xlf_proposed_obj[i].VERTICAL_std, xlf_proposed_obj[i].VERTICAL_min, xlf_proposed_obj[i].VERTICAL_max, xlf_proposed_obj[i].VERTICAL_USL, xlf_proposed_obj[i].VERTICAL_LSL, xlf_proposed_obj[i].Copper_content, xlf_proposed_obj[i].Iron_content, xlf_proposed_obj[i].DoesAcceptorReject, new Date()] 
-                                },  function(err, results, fields){
-                                    if(err){console.log(err)}
-                                    //console.log('saved to db!');
+            form_details().then(function(form_details_obj){
+                return proposed_cofa().then(function(xlf_proposed_obj){
+                    return ingot_barcode().then(function(xlf_barcode_obj){
+
+                        //  preparing for upload proposed cofa sheet
+                        for(let i=0;i<xlf_proposed_obj.length;i++){
+                            if(typeof xlf_proposed_obj[i].ingot_lot_id !== 'undefined' && xlf_proposed_obj[i].ingot_lot_id !== null && xlf_proposed_obj[i].ingot_lot_id.length > 0){
+                                //  to database table tbl_proposed_cofa
+                                mysqlLocal.getConnection(function(err,  connection){
+                                    connection.query({
+                                        sql:'INSERT INTO tbl_proposed_cofa SET ingot_lot_id=?, supplier_id=?, delivery_date=?, order_no=?, box_no=?,pallet_no=?,location=?,wafer_qty=?,distance_torm_top=?,length=?,top_end_length=?,MCLT_Top=?,MCLT_Tail=?,MCLT_LSL=?,RES_top=?,RES_tail=?,RES_USL=?,RES_LSL=?,OI_top=?,OI_tail=?,OI_USL=?,CS_top=?,CS_tail=?,CS_USL=?,DIA_ave=?,DIA_std=?,DIA_min=?,DIA_max=?,DIA_USL=?,DIA_LSL=?,FLAT_width_ave=?,FLAT_width_std=?,FLAT_width_min=?,FLAT_width_max=?,FLAT_width_USL=?,FLAT_width_LSL=?,FLAT_length_taper1=?,FLAT_length_taper2=?,FLAT_length_min=?,FLAT_length_max=?,FLAT_length_USL=?,CORNER_length_ave=?,CORNER_length_std=?,CORNER_length_min=?,CORNER_length_max=?,CORNER_length_USL=?,CORNER_length_LSL=?,CENTER_thickness_ave=?,CENTER_thickness_std=?,CENTER_thickness_min=?,CENTER_thickness_max=?,CENTER_thickness_USL=?,CENTER_thickness_LSL=?,TTV_ave=?,TTV_std=?,TTV_min=?,TTV_max=?,TTV_USL=?,RA_ave=?,RA_std=?,RA_min=?,RA_max=?,RA_USL=?,RZ_ave=?,RZ_std=?,RZ_min=?,RZ_max=?,RZ_USL=?,VERTICAL_ave=?,VERTICAL_std=?,VERTICAL_min=?,VERTICAL_max=?,VERTICAL_USL=?,VERTICAL_LSL=?,Copper_content=?,Iron_content=?,DoesAcceptorReject=?,Upload_time=?',
+                                        values: [xlf_proposed_obj[i].ingot_lot_id, form_details_obj[0].supplier_id, form_details_obj[0].delivery_date, form_details_obj[0].order_no, xlf_proposed_obj[i].box_no, xlf_proposed_obj[i].pallet_no, xlf_proposed_obj[i].location, xlf_proposed_obj[i].wafer_qty, xlf_proposed_obj[i].distance_torm_top, xlf_proposed_obj[i].length, xlf_proposed_obj[i].top_end_length, xlf_proposed_obj[i].MCLT_Top, xlf_proposed_obj[i].MCLT_Tail, xlf_proposed_obj[i].MCLT_LSL, xlf_proposed_obj[i].RES_top, xlf_proposed_obj[i].RES_tail, xlf_proposed_obj[i].RES_USL, xlf_proposed_obj[i].RES_LSL, xlf_proposed_obj[i].OI_top, xlf_proposed_obj[i].OI_tail, xlf_proposed_obj[i].OI_USL, xlf_proposed_obj[i].CS_top, xlf_proposed_obj[i].CS_tail, xlf_proposed_obj[i].CS_USL, xlf_proposed_obj[i].DIA_ave, xlf_proposed_obj[i].DIA_std, xlf_proposed_obj[i].DIA_min, xlf_proposed_obj[i].DIA_max, xlf_proposed_obj[i].DIA_USL, xlf_proposed_obj[i].DIA_LSL, xlf_proposed_obj[i].FLAT_width_ave, xlf_proposed_obj[i].FLAT_width_std, xlf_proposed_obj[i].FLAT_width_min, xlf_proposed_obj[i].FLAT_width_max, xlf_proposed_obj[i].FLAT_width_USL, xlf_proposed_obj[i].FLAT_width_LSL, xlf_proposed_obj[i].FLAT_length_taper1, xlf_proposed_obj[i].FLAT_length_taper2, xlf_proposed_obj[i].FLAT_length_min, xlf_proposed_obj[i].FLAT_length_max, xlf_proposed_obj[i].FLAT_length_USL, xlf_proposed_obj[i].CORNER_length_ave, xlf_proposed_obj[i].CORNER_length_std, xlf_proposed_obj[i].CORNER_length_min, xlf_proposed_obj[i].CORNER_length_max, xlf_proposed_obj[i].CORNER_length_USL, xlf_proposed_obj[i].CORNER_length_LSL, xlf_proposed_obj[i].CENTER_thickness_ave, xlf_proposed_obj[i].CENTER_thickness_std, xlf_proposed_obj[i].CENTER_thickness_min, xlf_proposed_obj[i].CENTER_thickness_max, xlf_proposed_obj[i].CENTER_thickness_USL, xlf_proposed_obj[i].CENTER_thickness_LSL, xlf_proposed_obj[i].TTV_ave, xlf_proposed_obj[i].TTV_std, xlf_proposed_obj[i].TTV_min, xlf_proposed_obj[i].TTV_max, xlf_proposed_obj[i].TTV_USL, xlf_proposed_obj[i].RA_ave, xlf_proposed_obj[i].RA_std, xlf_proposed_obj[i].RA_min, xlf_proposed_obj[i].RA_max, xlf_proposed_obj[i].RA_USL, xlf_proposed_obj[i].RZ_ave, xlf_proposed_obj[i].RZ_std, xlf_proposed_obj[i].RZ_min, xlf_proposed_obj[i].RZ_max, xlf_proposed_obj[i].RZ_USL, xlf_proposed_obj[i].VERTICAL_ave, xlf_proposed_obj[i].VERTICAL_std, xlf_proposed_obj[i].VERTICAL_min, xlf_proposed_obj[i].VERTICAL_max, xlf_proposed_obj[i].VERTICAL_USL, xlf_proposed_obj[i].VERTICAL_LSL, xlf_proposed_obj[i].Copper_content, xlf_proposed_obj[i].Iron_content, xlf_proposed_obj[i].DoesAcceptorReject, new Date()] 
+                                    },  function(err, results, fields){
+                                        if(err){console.log(err)}
+                                        //console.log('saved to db!');
+                                    });
+                                    connection.release(); // don't forget to release! -.-
                                 });
-                                connection.release(); // don't forget to release! -.-
-                            });
-        
-                        } // add else response for error
-                    }
-
-                    //  preparing for upload ingot lot barcodes sheet
-                    for(let i=0;i<xlf_barcode_obj.length;i++){
-                        if(typeof xlf_barcode_obj[i].ingot_lot_id !== 'undefined' && xlf_barcode_obj[i].ingot_lot_id !== null && xlf_barcode_obj[i].ingot_lot_id.length > 0){
-
-                            // to database table tbl_ingot_lot_barcode
-                            mysqlLocal.getConnection(function(err,  connection){
-                                connection.query({
-                                    sql: 'INSERT INTO tbl_ingot_lot_barcodes SET ingot_lot_id=?, bundle_barcode=?',
-                                    values: [xlf_barcode_obj[i].ingot_lot_id, xlf_barcode_obj[i].ingot_barcode]
-                                },  function(err, results, fields){
-                                  //  console.log('saved');
-                                });
-                                connection.release();   // release the kraken
-                            });
-
-
-                        } else {
-                            res.send('Error: Ingot Lot Barcode missing in row ' + i + 1);
+            
+                            } // add else response for error
                         }
-                    }
-                    //  send responsed to client
-                    res.send(JSON.stringify('Success: File has been uploaded'));
-                });
+    
+                        //  preparing for upload ingot lot barcodes sheet
+                        for(let i=0;i<xlf_barcode_obj.length;i++){
+                            if(typeof xlf_barcode_obj[i].ingot_lot_id !== 'undefined' && xlf_barcode_obj[i].ingot_lot_id !== null && xlf_barcode_obj[i].ingot_lot_id.length > 0){
+    
+                                // to database table tbl_ingot_lot_barcode
+                                mysqlLocal.getConnection(function(err,  connection){
+                                    connection.query({
+                                        sql: 'INSERT INTO tbl_ingot_lot_barcodes SET ingot_lot_id=?, supplier_id=?, delivery_date=?, order_no=?, bundle_barcode=?',
+                                        values: [xlf_barcode_obj[i].ingot_lot_id, form_details_obj[0].supplier_id, form_details_obj[0].delivery_date, form_details_obj[0].order_no, xlf_barcode_obj[i].ingot_barcode]
+                                    },  function(err, results, fields){
+                                      //  console.log('saved');
+                                    });
+                                    connection.release();   // release the kraken
+                                });
+    
+    
+                            } else {
+                                res.send('Error: Ingot Lot Barcode missing in row ' + i + 1);
+                            }
+                        }
+                        //  send responsed to client
+                        res.send(JSON.stringify('Success: File has been uploaded'));
+                    });
+                });    
             });
             
 
