@@ -3,14 +3,24 @@ $('document').ready(function(){
     /* validation */
     $('#upload_form').validate({
         rules:{
-            file: {
+            order_no:  {
+                required: true
+            },
+            xlf: {
+                required: true
+            },
+            delivery_date: {
+                required: true
+            },
+            supplier_id: {
                 required: true
             }
+            
         },
         messages:{
-            xlf: {
-                required: "Select CofA Excel file (.xlsx)"
-            }
+            order_no: "Please enter the invoice number",
+            delivery_date: "Please enter delivery date",
+            supplier_id: "Select supplier name"
         },
         submitHandler: submitForm
     });
@@ -20,11 +30,20 @@ $('document').ready(function(){
     /* validation */
 
     function submitForm(){
+
+        var serializedForm = $('#upload_form').find('select, input[name!=xlfile]').serializeArray();
+        var jsonSerializedForm ={header: serializedForm};
+        var jsonOutput={xlf: output};
+
+        var toGo = JSON.stringify($.extend( jsonSerializedForm, jsonOutput));
+
+        console.log(toGo);
+
         $.ajax({
             type: 'POST',
             url:  '/api/upload',
-            data: output,
-            contentType: "application/json",
+            data: toGo,
+            contentType: 'application/json',
             dataType: 'json',
             beforeSend: function(){
                 $('#error').fadeOut();
@@ -41,6 +60,7 @@ $('document').ready(function(){
                     $("#error").fadeIn(1000, function(){						
                         $("#error").html('<div class="alert alert-success">'+response+' </div>');
                     });
+                    $("#btn-upload").html('Please wait...');
                     setTimeout(' window.location.href="/upload"; ',5000);
                 } else {
                     $("#error").fadeIn(1000, function(){						
@@ -66,6 +86,7 @@ $('document').ready(function(){
                 }
             }
         });
+
     }
 
 });

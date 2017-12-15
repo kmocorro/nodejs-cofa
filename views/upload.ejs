@@ -3,29 +3,67 @@
 <head>
 <title>Uploader</title>
 <link rel="stylesheet" type="text/css" href="./style/style.css">
+<link rel="stylesheet" type="text/css" href="./style/font-awesome.css">
+<link rel="stylesheet" type="text/css" href="./style/bootstrap-datetimepicker.css">
 <link rel="stylesheet" type="text/css" href="./src/bootstrap/css/bootstrap.min.css">
 <script type="text/javascript" src="./src/popper/popper.min.js"></script>
 <script type="text/javascript" src="./src/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="./src/bootstrap/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="./js/validation.min.js"></script>
 <script type="text/javascript" src="./js/verifyUpload.js"></script>
+<script type="text/javascript" src="./js/moment.js"></script>
+<script type="text/javascript" src="./js/bootstrap-datetimepicker.js"></script>
 
 </head>
 <body>
     <div class = "container">
         <div class="wrapper">
-            <hr class="colorgraph"><br>
-
             <form action="" method="post" id="upload_form" name="upload_form" class="form-upload">
-                <div class="ask_div" style="padding-bottom:20px;">
+                <h3>Fill up the CofA form</h3>
+                <hr class="colorgraph"><br>
+                <div class="header_div" style="padding-bottom:20px;">
+                    <div class="order_no_div" style="padding-bottom:15px;">
+                        <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57' class="form-control" id="order_no" name="order_no" placeholder="Invoice Number"/>
+                    </div>
+                    <div class='input-group date' name='datetimepicker1' id='datetimepicker1' style="padding-bottom:15px;">
+                        <input type='text' class="form-control" id="delivery_date" name="delivery_date" placeholder="Delivery Date"/>
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                        <script type="text/javascript">
+                            $(function () {
+                                $('#datetimepicker1').datetimepicker();
+                            });
+                        </script>
+                    </div>
+                    <div class="supplier_id" class="supplier_id" id="supplier_id" name="supplier_id" style="padding-bottom:1px;">
+                        <!--use ejs here from supplier list table for select input-->
+                        <select class="form-control" id="supplier_id" name="supplier_id">
+                            <!--ejs loop here-->
+                            <option selected="true" disabled="disabled" >Choose Supplier Name</option>
+                            <% for(let i=0; i<supplier_obj.length;i++){ %>
+                                <option value="<%= supplier_obj[i].supplier_id %>">
+                                    <%= supplier_obj[i].supplier_name %>
+                                </option>
+                            <% } %>
+
+                        </select>
+                    </div>
+                </div>
+                
+                <hr>
+
+                <div class="ask_div" style="padding-bottom:10px;">
                     <h4>Upload CofA file here:</h4>
                 </div>
                 <div id="error">
                     <!-- error / success will be shown here -->
                 </div>
-                <div class="xlf_div" style="padding-bottom: 20px;">
+                <div class="xlf_div" style="padding-bottom: 10px;">
                     <input type="file" name="xlfile" id="xlf"/>
                 </div>
+                <hr>
+                
                 <div class="submit_div" style="padding-bottom: 20px;">
                     <button id="btn-upload" class="btn btn-lg btn-primary btn-block" name="Submit" type="Submit" value="Upload">Upload</button>
                 </div>
@@ -52,11 +90,13 @@
     
         var to_json = function to_json(workbook) {
             var result = {};
+            //var result = [];
             workbook.SheetNames.forEach(function(sheetName) {
                 var roa = X.utils.sheet_to_json(workbook.Sheets[sheetName], {header:1});
                 if(roa.length) result[sheetName] = roa;
             });
-            return JSON.stringify(result, 2, 2);
+            //return JSON.stringify(result, 2, 2);
+            return result;
         };
     
         return function process_wb(wb) {
@@ -68,7 +108,7 @@
                 case "json": output = to_json(wb); break; */
                 default: output = to_json(wb);
             }
-            console.log(output);
+           // console.log(output);
             
             
             //if(OUT.innerText === undefined) OUT.textContent = output;
