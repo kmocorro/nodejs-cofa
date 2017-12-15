@@ -27,6 +27,17 @@ $('document').ready(function(){
     $('input[name^="xlfile"]').rules('add', {
         required: true,
     });
+
+    $('input:file').change('click', function(){
+        $("#btn-upload").prop("disabled",true);
+        $("#btn-upload").html('Loading file...');
+
+        setTimeout(function(){
+            $("#btn-upload").html('Upload');
+            $("#btn-upload").prop("disabled",false);
+        }, 2000);
+            
+    });
     /* validation */
 
     function submitForm(){
@@ -65,6 +76,9 @@ $('document').ready(function(){
                 } else {
                     $("#error").fadeIn(1000, function(){						
                         $("#error").html('<div class="alert alert-danger">'+response+' </div>'); 
+                        $("#btn-upload").prop("disabled",false);
+                        $("#btn-upload").html('Try again');
+                        /*
                         let counter = 10;
                         let interval = setInterval(function(){
                             counter--;
@@ -82,6 +96,7 @@ $('document').ready(function(){
                             $("#btn-upload").prop("disabled",false);
                             $("#btn-upload").html('Try again');
                         }, counter +'000');
+                        */
                     });
                 }
             }

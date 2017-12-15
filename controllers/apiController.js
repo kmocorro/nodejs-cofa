@@ -346,30 +346,12 @@ module.exports = function(app){
                     }
                 });
             }
-
     
             /* Promise Invoker */
             form_details().then(function(form_details_obj){
                 return proposed_cofa().then(function(xlf_proposed_obj){
                     return ingot_barcode().then(function(xlf_barcode_obj){
-                        /*
-                        //  check order number if exist before uploading
-                        //  this should prevent user from double entry
-                        mysqlLocal.getConnection(function(err, connection){
-                            connection.query({
-                                sql: 'SELECT order_no FROM tbl_proposed_cofa WHERE order_no=?',
-                                values:[form_details_obj[0].order_no]
-                            },  function(err, results, fields){
-                            
-                                if(typeof results[0].order_no !== 'undefined' && results[0].order_no !== null){
-
-                                }
-
-                            }); 
-                            connection.release();
-                        });
-                        */
-
+                        
                         //  preparing for upload proposed cofa sheet
                         for(let i=0;i<xlf_proposed_obj.length;i++){
                             if(typeof xlf_proposed_obj[i].ingot_lot_id !== 'undefined' && xlf_proposed_obj[i].ingot_lot_id !== null && xlf_proposed_obj[i].ingot_lot_id.length > 0){
@@ -620,6 +602,16 @@ module.exports = function(app){
         */
             
     }); 
+
+    //  user registration page
+    app.get('/register', function(req, res){
+        
+    });
+
+    //  admin page
+    app.get('/admin', function(req, res){
+
+    });
 
     //  get upload page
     app.get('/upload', function(req, res){
