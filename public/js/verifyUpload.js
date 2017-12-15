@@ -37,7 +37,7 @@ $('document').ready(function(){
 
         var toGo = JSON.stringify($.extend( jsonSerializedForm, jsonOutput));
 
-        console.log(toGo);
+        //console.log(toGo);
 
         $.ajax({
             type: 'POST',

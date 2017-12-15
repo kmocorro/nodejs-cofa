@@ -22,7 +22,7 @@ module.exports = function(app){
         //console.log(post_xlf.header[0]['value']);
         
         if(!post_xlf){
-            res.send(JSON.stringify('Error: Upload the required CofA file'));
+            res.send(JSON.stringify('Upload the required CofA file'));
         } else {
 
             function form_details(){ // promise function for header :)
@@ -40,17 +40,35 @@ module.exports = function(app){
                             order_no:   post_xlf.header[0]['value']
                         });
 
-                        //  resolve
-                        resolve(form_details_obj);
-                        //console.log(form_details_obj);
+                        //  check if there's existing order no
+                        mysqlLocal.getConnection(function(err, connection){
+                            connection.query({
+                                sql: 'SELECT * FROM tbl_proposed_cofa WHERE order_no=?',
+                                values:[form_details_obj[0].order_no]
+                            },  function(err, results, fields){
 
+                                //  if not undefined resolve the form details obj
+                                if(typeof results[0] !== 'undefined' && results[0] !== null){
+                                                                        
+                                    res.send(JSON.stringify('Invoice already exist'));
+
+                                } else {
+
+                                    //  resolve
+                                    resolve(form_details_obj);
+                                    //console.log(form_details_obj);
+                                }
+
+                            });
+                            connection.release();
+                        });
                     }
                 });
             }
 
             function proposed_cofa(){ // promise function for proposed cofa
                 return new Promise(function(resolve, reject){
-    
+        
                     //  check if the file is CofA and has.
                     if(typeof post_xlf.xlf['PROPOSED CofA'] !== 'undefined' && post_xlf.xlf['PROPOSED CofA'] !== null && post_xlf.xlf['PROPOSED CofA'].length > 0){
     
@@ -294,8 +312,9 @@ module.exports = function(app){
                         //  now that it's clean, resolve!
                         resolve(xlf_proposed_obj);
                     } else { // then res to client upload the required file
-                        res.send(JSON.stringify('Error: Upload the required CofA file'));
+                        res.send(JSON.stringify('Upload CofA file with the correct template'));
                     }
+
                 });
             }
     
@@ -376,8 +395,8 @@ module.exports = function(app){
                                 // to database table tbl_ingot_lot_barcode
                                 mysqlLocal.getConnection(function(err,  connection){
                                     connection.query({
-                                        sql: 'INSERT INTO tbl_ingot_lot_barcodes SET ingot_lot_id=?, supplier_id=?, delivery_date=?, order_no=?, bundle_barcode=?',
-                                        values: [xlf_barcode_obj[i].ingot_lot_id, form_details_obj[0].supplier_id, form_details_obj[0].delivery_date, form_details_obj[0].order_no, xlf_barcode_obj[i].ingot_barcode]
+                                        sql: 'INSERT INTO tbl_ingot_lot_barcodes SET ingot_lot_id=?, supplier_id=?, delivery_date=?, order_no=?, upload_time=?, bundle_barcode=?',
+                                        values: [xlf_barcode_obj[i].ingot_lot_id, form_details_obj[0].supplier_id, form_details_obj[0].delivery_date, form_details_obj[0].order_no, new Date(),xlf_barcode_obj[i].ingot_barcode]
                                     },  function(err, results, fields){
                                       //  console.log('saved');
                                     });
@@ -386,7 +405,7 @@ module.exports = function(app){
     
     
                             } else {
-                                res.send('Error: Ingot Lot Barcode missing in row ' + i + 1);
+                                res.send('Ingot Lot Barcode missing in row ' + i + 1);
                             }
                         }
                         //  send responsed to client
