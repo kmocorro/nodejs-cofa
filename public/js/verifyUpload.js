@@ -31,6 +31,8 @@ $('document').ready(function(){
     $('input:file').change('click', function(){
         $("#btn-upload").prop("disabled",true);
         $("#btn-upload").html('Loading file...');
+        
+        $("#xlf").prop("disabled",true);
 
         setTimeout(function(){
             $("#btn-upload").html('Upload');
@@ -68,7 +70,7 @@ $('document').ready(function(){
 					$("#btn-upload").html('Uploading...');
                     $("#btn-upload").prop("disabled",true);
                     $("#xlf").prop("disabled",true);
-                    $("#error").fadeIn(1000, function(){						
+                    $("#error").fadeIn(0, function(){						
                         $("#error").html('<div class="alert alert-success">'+response+' </div>');
                     });
                     $("#btn-upload").html('Please wait...');
@@ -77,6 +79,7 @@ $('document').ready(function(){
                     $("#error").fadeIn(1000, function(){						
                         $("#error").html('<div class="alert alert-danger">'+response+' </div>'); 
                         $("#btn-upload").prop("disabled",false);
+                        $("#xlf").prop("disabled",false);
                         $("#btn-upload").html('Try again');
                         /*
                         let counter = 10;
