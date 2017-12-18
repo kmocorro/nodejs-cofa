@@ -1,5 +1,6 @@
 let bodyParser = require('body-parser');
 let mysqlLocal = require('../dbconfig/configLocal').poolLocal;
+let mysqlCloud = require('../dbconfig/configCloud').poolCloud;  //  we're going to cloud
 let Promise = require('bluebird');
 let moment = require('moment');
 let xlsx = require('xlsx');
@@ -19,7 +20,7 @@ module.exports = function(app){
             res.send(JSON.stringify('Upload the required CofA file'));
         } else {
 
-            function form_details(){ // promise function for header :)
+            function form_details(){ // promise function for header
                 return new Promise(function(resolve, reject){
 
                     //  make sure no null here
@@ -38,7 +39,7 @@ module.exports = function(app){
                         });
 
                         //  check if there's existing order no
-                        mysqlLocal.getConnection(function(err, connection){
+                        mysqlCloud.getConnection(function(err, connection){
                             connection.query({
                                 sql: 'SELECT * FROM tbl_proposed_cofa WHERE order_no=?',
                                 values:[form_details_obj[0].order_no]
@@ -349,7 +350,7 @@ module.exports = function(app){
                     }
                 });
             }
-            //  just add more function if there's more sheets to come //
+            /*  just add more function if there's more sheeeets to come */
     
             /* Promise Invoker */
             form_details().then(function(form_details_obj){
@@ -360,7 +361,7 @@ module.exports = function(app){
                         for(let i=0;i<xlf_proposed_obj.length;i++){
                             if(typeof xlf_proposed_obj[i].ingot_lot_id !== 'undefined' && xlf_proposed_obj[i].ingot_lot_id !== null && xlf_proposed_obj[i].ingot_lot_id.length > 0){
                                 //  to database table tbl_proposed_cofa
-                                mysqlLocal.getConnection(function(err,  connection){
+                                mysqlCloud.getConnection(function(err,  connection){
                                     connection.query({
                                         sql:'INSERT INTO tbl_proposed_cofa SET ingot_lot_id=?, supplier_id=?, delivery_date=?, order_no=?, box_no=?,pallet_no=?,location=?,wafer_qty=?,distance_torm_top=?,length=?,top_end_length=?,MCLT_Top=?,MCLT_Tail=?,MCLT_LSL=?,RES_top=?,RES_tail=?,RES_USL=?,RES_LSL=?,OI_top=?,OI_tail=?,OI_USL=?,CS_top=?,CS_tail=?,CS_USL=?,DIA_ave=?,DIA_std=?,DIA_min=?,DIA_max=?,DIA_USL=?,DIA_LSL=?,FLAT_width_ave=?,FLAT_width_std=?,FLAT_width_min=?,FLAT_width_max=?,FLAT_width_USL=?,FLAT_width_LSL=?,FLAT_length_taper1=?,FLAT_length_taper2=?,FLAT_length_min=?,FLAT_length_max=?,FLAT_length_USL=?,CORNER_length_ave=?,CORNER_length_std=?,CORNER_length_min=?,CORNER_length_max=?,CORNER_length_USL=?,CORNER_length_LSL=?,CENTER_thickness_ave=?,CENTER_thickness_std=?,CENTER_thickness_min=?,CENTER_thickness_max=?,CENTER_thickness_USL=?,CENTER_thickness_LSL=?,TTV_ave=?,TTV_std=?,TTV_min=?,TTV_max=?,TTV_USL=?,RA_ave=?,RA_std=?,RA_min=?,RA_max=?,RA_USL=?,RZ_ave=?,RZ_std=?,RZ_min=?,RZ_max=?,RZ_USL=?,VERTICAL_ave=?,VERTICAL_std=?,VERTICAL_min=?,VERTICAL_max=?,VERTICAL_USL=?,VERTICAL_LSL=?,Copper_content=?,Iron_content=?,DoesAcceptorReject=?,Upload_time=?',
                                         values: [xlf_proposed_obj[i].ingot_lot_id, form_details_obj[0].supplier_id, form_details_obj[0].delivery_date, form_details_obj[0].order_no, xlf_proposed_obj[i].box_no, xlf_proposed_obj[i].pallet_no, xlf_proposed_obj[i].location, xlf_proposed_obj[i].wafer_qty, xlf_proposed_obj[i].distance_torm_top, xlf_proposed_obj[i].length, xlf_proposed_obj[i].top_end_length, xlf_proposed_obj[i].MCLT_Top, xlf_proposed_obj[i].MCLT_Tail, xlf_proposed_obj[i].MCLT_LSL, xlf_proposed_obj[i].RES_top, xlf_proposed_obj[i].RES_tail, xlf_proposed_obj[i].RES_USL, xlf_proposed_obj[i].RES_LSL, xlf_proposed_obj[i].OI_top, xlf_proposed_obj[i].OI_tail, xlf_proposed_obj[i].OI_USL, xlf_proposed_obj[i].CS_top, xlf_proposed_obj[i].CS_tail, xlf_proposed_obj[i].CS_USL, xlf_proposed_obj[i].DIA_ave, xlf_proposed_obj[i].DIA_std, xlf_proposed_obj[i].DIA_min, xlf_proposed_obj[i].DIA_max, xlf_proposed_obj[i].DIA_USL, xlf_proposed_obj[i].DIA_LSL, xlf_proposed_obj[i].FLAT_width_ave, xlf_proposed_obj[i].FLAT_width_std, xlf_proposed_obj[i].FLAT_width_min, xlf_proposed_obj[i].FLAT_width_max, xlf_proposed_obj[i].FLAT_width_USL, xlf_proposed_obj[i].FLAT_width_LSL, xlf_proposed_obj[i].FLAT_length_taper1, xlf_proposed_obj[i].FLAT_length_taper2, xlf_proposed_obj[i].FLAT_length_min, xlf_proposed_obj[i].FLAT_length_max, xlf_proposed_obj[i].FLAT_length_USL, xlf_proposed_obj[i].CORNER_length_ave, xlf_proposed_obj[i].CORNER_length_std, xlf_proposed_obj[i].CORNER_length_min, xlf_proposed_obj[i].CORNER_length_max, xlf_proposed_obj[i].CORNER_length_USL, xlf_proposed_obj[i].CORNER_length_LSL, xlf_proposed_obj[i].CENTER_thickness_ave, xlf_proposed_obj[i].CENTER_thickness_std, xlf_proposed_obj[i].CENTER_thickness_min, xlf_proposed_obj[i].CENTER_thickness_max, xlf_proposed_obj[i].CENTER_thickness_USL, xlf_proposed_obj[i].CENTER_thickness_LSL, xlf_proposed_obj[i].TTV_ave, xlf_proposed_obj[i].TTV_std, xlf_proposed_obj[i].TTV_min, xlf_proposed_obj[i].TTV_max, xlf_proposed_obj[i].TTV_USL, xlf_proposed_obj[i].RA_ave, xlf_proposed_obj[i].RA_std, xlf_proposed_obj[i].RA_min, xlf_proposed_obj[i].RA_max, xlf_proposed_obj[i].RA_USL, xlf_proposed_obj[i].RZ_ave, xlf_proposed_obj[i].RZ_std, xlf_proposed_obj[i].RZ_min, xlf_proposed_obj[i].RZ_max, xlf_proposed_obj[i].RZ_USL, xlf_proposed_obj[i].VERTICAL_ave, xlf_proposed_obj[i].VERTICAL_std, xlf_proposed_obj[i].VERTICAL_min, xlf_proposed_obj[i].VERTICAL_max, xlf_proposed_obj[i].VERTICAL_USL, xlf_proposed_obj[i].VERTICAL_LSL, xlf_proposed_obj[i].Copper_content, xlf_proposed_obj[i].Iron_content, xlf_proposed_obj[i].DoesAcceptorReject, new Date()] 
@@ -379,7 +380,7 @@ module.exports = function(app){
                             if(typeof xlf_barcode_obj[i].ingot_lot_id !== 'undefined' && xlf_barcode_obj[i].ingot_lot_id !== null && xlf_barcode_obj[i].ingot_lot_id.length > 0){
     
                                 // to database table tbl_ingot_lot_barcode
-                                mysqlLocal.getConnection(function(err,  connection){
+                                mysqlCloud.getConnection(function(err,  connection){
                                     connection.query({
                                         sql: 'INSERT INTO tbl_ingot_lot_barcodes SET ingot_lot_id=?, supplier_id=?, delivery_date=?, order_no=?, upload_time=?, bundle_barcode=?',
                                         values: [xlf_barcode_obj[i].ingot_lot_id, form_details_obj[0].supplier_id, form_details_obj[0].delivery_date, form_details_obj[0].order_no, new Date(),xlf_barcode_obj[i].ingot_barcode]
@@ -418,7 +419,7 @@ module.exports = function(app){
     //  get upload page
     app.get('/upload', function(req, res){
         //  get the supplier list
-        mysqlLocal.getConnection(function(err, connection){
+        mysqlCloud.getConnection(function(err, connection){
             connection.query({
                 sql: 'SELECT * FROM tbl_supplier_list'
             },  function(err, results, fields){
