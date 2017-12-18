@@ -37,7 +37,7 @@ $('document').ready(function(){
         setTimeout(function(){
             $("#btn-upload").html('Upload');
             $("#btn-upload").prop("disabled",false);
-        }, 2000);
+        }, 4000);
             
     });
     /* validation */
@@ -46,7 +46,9 @@ $('document').ready(function(){
 
         var serializedForm = $('#upload_form').find('select, input[name!=xlfile]').serializeArray();
         var jsonSerializedForm ={header: serializedForm};
-        var jsonOutput={xlf: output};
+        var jsonOutput={xlf: outputJSON};
+
+        console.log(jsonOutput);
 
         var toGo = JSON.stringify($.extend( jsonSerializedForm, jsonOutput));
 

@@ -20,6 +20,7 @@
         <div class="wrapper">
             <form action="" method="post" id="upload_form" name="upload_form" class="form-upload">
                 <h3>Fill up the CofA form</h3>
+                
                 <hr class="colorgraph"><br>
                 <div class="header_div" style="padding-bottom:20px;">
                     <div class="order_no_div" style="padding-bottom:15px;">
@@ -83,6 +84,7 @@
 	worker: './js/xlsxworker.js'
     };
     var global_wb;
+    var outputJSON;
     
     var process_wb = (function() {
 	var OUT = document.getElementById('out');
@@ -101,14 +103,14 @@
     
         return function process_wb(wb) {
             global_wb = wb;
-            output = "";
+            outputJSON = "";
             switch(get_format()) {
               /*  case "form": output = to_fmla(wb); break;
                 case "html": output = to_html(wb); break;
                 case "json": output = to_json(wb); break; */
-                default: output = to_json(wb);
+                default: outputJSON = to_json(wb);
             }
-           // console.log(output);
+            console.log(outputJSON);
             
             
             //if(OUT.innerText === undefined) OUT.textContent = output;
@@ -128,11 +130,11 @@
     var do_file = (function() {
         var rABS = typeof FileReader !== "undefined" && (FileReader.prototype||{}).readAsBinaryString;
         var domrabs = document.getElementsByName("userabs")[0];
-        if(!rABS) domrabs.disabled = !(domrabs.checked = false);
+    //    if(!rABS) domrabs.disabled = !(domrabs.checked = false);
 
         var use_worker = typeof Worker !== 'undefined';
         var domwork = document.getElementsByName("useworker")[0];
-        if(!use_worker) domwork.disabled = !(domwork.checked = false);
+    //    if(!use_worker) domwork.disabled = !(domwork.checked = false);
 
         var xw = function xw(data, cb) {
             var worker = new Worker(XW.worker);
