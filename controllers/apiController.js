@@ -2,26 +2,20 @@ let bodyParser = require('body-parser');
 let mysqlLocal = require('../dbconfig/configLocal').poolLocal;
 let Promise = require('bluebird');
 let moment = require('moment');
-let fs = require('fs');
-
 let xlsx = require('xlsx');
-
 
 module.exports = function(app){
     //  use bodyParser to parse out json with limit of 50mb
     app.use(bodyParser.json({limit: '50mb'}));
     //  make sure it can handle url request
     app.use(bodyParser.urlencoded({limit: '50mb', extended: true }));
-
     //  uploader api
     app.post('/api/upload', function(req, res){
-        let post_xlf = req.body;  //  json from client into obj
+        let post_xlf = req.body;  //  parse json from client 
         let xlf_proposed_obj = [];   //  cleaned obj going to db
         let xlf_barcode_obj = [];   //  "   "   "   "
-
-        //console.log(post_xlf.header[0]['value']);
         
-        if(!post_xlf){
+        if(!post_xlf){  //  post_xlf must have xl data
             res.send(JSON.stringify('Upload the required CofA file'));
         } else {
 
@@ -34,6 +28,9 @@ module.exports = function(app){
                         let form_details_obj = [];
                         let dDate = post_xlf.header[1]['value'];
 
+                        //  [0] - order no
+                        //  [1] - delivery date
+                        //  [2] - supplier id
                         form_details_obj.push({
                             supplier_id: post_xlf.header[2]['value'],
                             delivery_date:  moment(new Date(dDate)).format('YYYY-MM-DD H:mm:ss'),
@@ -62,14 +59,16 @@ module.exports = function(app){
                             });
                             connection.release();
                         });
+                    } else {    // if there's null in the form.. who knows,
+                        res.send(JSON.stringify('Cannot find the form details.<br> Please Fill up the form.'));
                     }
                 });
             }
 
-            function proposed_cofa(){ // promise function for proposed cofa
+            function proposed_cofa(){ // promise function for proposed cofa sheet
                 return new Promise(function(resolve, reject){
         
-                    //  check if the file is CofA and has.
+                    //  check if the file has proposed cofa sheet
                     if(typeof post_xlf.xlf['PROPOSED CofA'] !== 'undefined' && post_xlf.xlf['PROPOSED CofA'] !== null && post_xlf.xlf['PROPOSED CofA'].length > 0){
     
                         /*  CLEANING LOOP */
@@ -312,14 +311,15 @@ module.exports = function(app){
                         //  now that it's clean, resolve!
                         resolve(xlf_proposed_obj);
                     } else { // then res to client upload the required file
-                        res.send(JSON.stringify('Upload CofA file with the correct template'));
+                        res.send(JSON.stringify('Error proposed cofa: Upload CofA file with correct template'));
                     }
-
                 });
             }
     
-            function ingot_barcode(){ // promise function for barcode
+            function ingot_barcode(){ // promise function for barcode sheet
                 return new Promise(function(resolve, reject){
+
+                    //  check if the file has ingot lot barcode sheet
                     if(typeof post_xlf.xlf['Ingot Lot Barcodes'] !== 'undefined' && post_xlf.xlf['Ingot Lot Barcodes'] !== null && post_xlf.xlf['Ingot Lot Barcodes'].length > 0){
                         
                         /* CLEANING LOOP */
@@ -333,6 +333,9 @@ module.exports = function(app){
                                         ingot_barcode:  post_xlf.xlf['Ingot Lot Barcodes'][i][j]
                                     });
                                 }
+                            } else { // if there's missing ingot lot # 
+                                res.send(JSON.stringify('Error: Missing Ingot Lot # at barcode sheet'));
+                                reject('Error: Missing Ingot Lot # at barcode sheet');
                             }
                         }
                         /* end of cleaning */
@@ -341,11 +344,12 @@ module.exports = function(app){
                         resolve(xlf_barcode_obj);
                        // console.log(xlf_barcode_obj);
     
-                    } else {
-                        res.send(JSON.stringify('Error @ ingot barcode: Upload the required CofA File'));
+                    } else {    // then res to client upload the required file
+                        res.send(JSON.stringify('Error ingot barcode: Upload CofA File with correct template'));
                     }
                 });
             }
+            //  just add more function if there's more sheets to come //
     
             /* Promise Invoker */
             form_details().then(function(form_details_obj){
@@ -367,7 +371,7 @@ module.exports = function(app){
                                     connection.release(); // don't forget to release! -.-
                                 });
             
-                            } // add else response for error
+                            }
                         }
     
                         //  preparing for upload ingot lot barcodes sheet
@@ -386,8 +390,6 @@ module.exports = function(app){
                                 });
     
     
-                            } else {
-                                res.send('Ingot Lot Barcode missing in row ' + i + 1);
                             }
                         }
                         //  send responsed to client
@@ -396,223 +398,23 @@ module.exports = function(app){
                 });    
             });
             
-
         }
         
-        
-        /* //   added more cleaning 
-        function proposed_cofa(){
-            return new Promise(function(resolve, reject){
-                if(typeof post_xlf.xlf['PROPOSED CofA'] !== 'undefined' && post_xlf.xlf['PROPOSED CofA'] !== null && post_xlf.xlf['PROPOSED CofA'].length > 0){
-                    //  loop the data starting from 4th array
-                    for(let i=3;i<post_xlf.xlf['PROPOSED CofA'].length;i++){
-                        if(typeof post_xlf.xlf['PROPOSED CofA'][i] !== 'undefined'){
-                            //  clean it
-                            xlf_proposed_obj.push({
-                                ingot_lot_id:   post_xlf.xlf['PROPOSED CofA'][i][0],
-                                box_no: post_xlf.xlf['PROPOSED CofA'][i][1],
-                                pallet_no:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][2]),
-                                location:   post_xlf.xlf['PROPOSED CofA'][i][3],
-                                wafer_qty:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][4]),
-                                distance_torm_top:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][4]),
-                                length: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][5]),
-                                top_end_length: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][6]),
-                                MCLT_Top:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][7]),
-                                MCLT_Tail:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][8]),
-                                MCLT_LSL:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][9]),
-                                RES_top:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][10]),
-                                RES_tail:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][11]),
-                                RES_USL:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][12]),
-                                RES_LSL:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][13]),
-                                OI_top: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][14]),
-                                OI_tail:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][15]),
-                                OI_USL: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][16]),
-                                CS_top: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][17]),
-                                CS_tail:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][18]),
-                                CS_USL: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][19]),
-                                DIA_ave:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][20]),
-                                DIA_std:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][21]),
-                                DIA_min:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][22]),
-                                DIA_max:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][23]),
-                                DIA_USL:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][24]),
-                                DIA_LSL:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][25]),
-                                FLAT_width_ave: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][26]),
-                                FLAT_width_std: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][27]),
-                                FLAT_width_min: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][28]),
-                                FLAT_width_max: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][29]),
-                                FLAT_width_USL: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][30]),
-                                FLAT_width_LSL: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][31]),
-                                FLAT_length_taper1: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][32]),
-                                FLAT_length_taper2: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][33]),
-                                FLAT_length_min:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][34]),
-                                FLAT_length_max:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][35]),
-                                FLAT_length_USL:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][36]),
-                                CORNER_length_ave:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][37]),
-                                CORNER_length_std:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][38]),
-                                CORNER_length_min:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][39]),
-                                CORNER_length_max:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][40]),
-                                CORNER_length_USL:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][41]),
-                                CORNER_length_LSL:  parseFloat(post_xlf.xlf['PROPOSED CofA'][i][42]),
-                                CENTER_thickness_ave:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][43]),
-                                CENTER_thickness_std:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][44]),
-                                CENTER_thickness_min:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][45]),
-                                CENTER_thickness_max:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][46]),
-                                CENTER_thickness_USL:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][47]),
-                                CENTER_thickness_LSL:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][48]),
-                                TTV_ave:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][49]),
-                                TTV_std:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][50]),
-                                TTV_min:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][51]),
-                                TTV_max:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][52]),
-                                TTV_USL:    parseFloat(post_xlf.xlf['PROPOSED CofA'][i][53]),
-                                RA_ave: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][54]),
-                                RA_std: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][55]),
-                                RA_min: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][56]),
-                                RA_max: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][57]),
-                                RA_USL: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][58]),
-                                RZ_ave: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][59]),
-                                RZ_std: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][60]),
-                                RZ_min: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][61]),
-                                RZ_max: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][62]),
-                                RZ_USL: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][63]),
-                                VERTICAL_ave:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][64]),
-                                VERTICAL_std:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][65]),
-                                VERTICAL_min:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][66]),
-                                VERTICAL_max:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][67]),
-                                VERTICAL_USL:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][68]),
-                                VERTICAL_LSL:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][69]),
-                                Copper_content: parseFloat(post_xlf.xlf['PROPOSED CofA'][i][70]),
-                                Iron_content:   parseFloat(post_xlf.xlf['PROPOSED CofA'][i][71]),
-                                DoesAcceptorReject: post_xlf.xlf['PROPOSED CofA'][i][72]
-                            });
-                        }
-                    }
-
-                    //  resolve maybe?
-                    //console.log(xlf_proposed_obj);
-                    resolve(xlf_proposed_obj);
-
-                } else {
-                    res.send('Oops! Upload the required CofA File');
-                    console.log('Oops! Upload the required CofA File');
-                }
-            });
-        }
-        */
-
-        /* replaced by promise
-            //  Proposed CofA or Ingot Lot Barcodes should not be undefined or null
-            if(typeof post_xlf.xlf['PROPOSED CofA'] !== 'undefined' && post_xlf.xlf['PROPOSED CofA'] !== null && post_xlf.xlf['PROPOSED CofA'].length > 0 && typeof post_xlf[0].Ingot_Lot_Barcodes !== 'undefined' && post_xlf[0].Ingot_Lot_Barcodes !== null && post_xlf[0].Ingot_Lot_Barcodes.length > 0){
-
-                //  loop the data starting from 4th array
-                for(let i=3;i<post_xlf.xlf['PROPOSED CofA'].length;i++){
-                    if(typeof post_xlf.xlf['PROPOSED CofA'][i] !== 'undefined'){
-                        //  clean it
-                        xlf_proposed_obj.push({
-                            ingot_lot_id:   post_xlf.xlf['PROPOSED CofA'][i][0],
-                            box_no: post_xlf.xlf['PROPOSED CofA'][i][1],
-                            pallet_no:  post_xlf.xlf['PROPOSED CofA'][i][2],
-                            location:   post_xlf.xlf['PROPOSED CofA'][i][3],
-                            wafer_qty:  post_xlf.xlf['PROPOSED CofA'][i][4],
-                            distance_torm_top:  post_xlf.xlf['PROPOSED CofA'][i][4],
-                            length: post_xlf.xlf['PROPOSED CofA'][i][5],
-                            top_end_length: post_xlf.xlf['PROPOSED CofA'][i][6],
-                            MCLT_Top:   post_xlf.xlf['PROPOSED CofA'][i][7],
-                            MCLT_Tail:  post_xlf.xlf['PROPOSED CofA'][i][8],
-                            MCLT_LSL:   post_xlf.xlf['PROPOSED CofA'][i][9],
-                            RES_top:    post_xlf.xlf['PROPOSED CofA'][i][10],
-                            RES_tail:   post_xlf.xlf['PROPOSED CofA'][i][11],
-                            RES_USL:    post_xlf.xlf['PROPOSED CofA'][i][12],
-                            RES_LSL:    post_xlf.xlf['PROPOSED CofA'][i][13],
-                            OI_top: post_xlf.xlf['PROPOSED CofA'][i][14],
-                            OI_tail:    post_xlf.xlf['PROPOSED CofA'][i][15],
-                            OI_USL: post_xlf.xlf['PROPOSED CofA'][i][16],
-                            CS_top: post_xlf.xlf['PROPOSED CofA'][i][17],
-                            CS_tail:    post_xlf.xlf['PROPOSED CofA'][i][18],
-                            CS_USL: post_xlf.xlf['PROPOSED CofA'][i][19],
-                            DIA_ave:    post_xlf.xlf['PROPOSED CofA'][i][20],
-                            DIA_std:    post_xlf.xlf['PROPOSED CofA'][i][21],
-                            DIA_min:    post_xlf.xlf['PROPOSED CofA'][i][22],
-                            DIA_max:    post_xlf.xlf['PROPOSED CofA'][i][23],
-                            DIA_USL:    post_xlf.xlf['PROPOSED CofA'][i][24],
-                            DIA_LSL:    post_xlf.xlf['PROPOSED CofA'][i][25],
-                            FLAT_width_ave: post_xlf.xlf['PROPOSED CofA'][i][26],
-                            FLAT_width_std: post_xlf.xlf['PROPOSED CofA'][i][27],
-                            FLAT_width_min: post_xlf.xlf['PROPOSED CofA'][i][28],
-                            FLAT_width_max: post_xlf.xlf['PROPOSED CofA'][i][29],
-                            FLAT_width_USL: post_xlf.xlf['PROPOSED CofA'][i][30],
-                            FLAT_width_LSL: post_xlf.xlf['PROPOSED CofA'][i][31],
-                            FLAT_length_taper1: post_xlf.xlf['PROPOSED CofA'][i][32],
-                            FLAT_length_taper2: post_xlf.xlf['PROPOSED CofA'][i][33],
-                            FLAT_length_min:    post_xlf.xlf['PROPOSED CofA'][i][34],
-                            FLAT_length_max:    post_xlf.xlf['PROPOSED CofA'][i][35],
-                            FLAT_length_USL:    post_xlf.xlf['PROPOSED CofA'][i][36],
-                            CORNER_length_ave:  post_xlf.xlf['PROPOSED CofA'][i][37],
-                            CORNER_length_std:  post_xlf.xlf['PROPOSED CofA'][i][38],
-                            CORNER_length_min:  post_xlf.xlf['PROPOSED CofA'][i][39],
-                            CORNER_length_max:  post_xlf.xlf['PROPOSED CofA'][i][40],
-                            CORNER_length_USL:  post_xlf.xlf['PROPOSED CofA'][i][41],
-                            CORNER_length_LSL:  post_xlf.xlf['PROPOSED CofA'][i][42],
-                            CENTER_thickness_ave:   post_xlf.xlf['PROPOSED CofA'][i][43],
-                            CENTER_thickness_std:   post_xlf.xlf['PROPOSED CofA'][i][44],
-                            CENTER_thickness_min:   post_xlf.xlf['PROPOSED CofA'][i][45],
-                            CENTER_thickness_max:   post_xlf.xlf['PROPOSED CofA'][i][46],
-                            CENTER_thickness_USL:   post_xlf.xlf['PROPOSED CofA'][i][47],
-                            CENTER_thickness_LSL:   post_xlf.xlf['PROPOSED CofA'][i][48],
-                            TTV_ave:    post_xlf.xlf['PROPOSED CofA'][i][49],
-                            TTV_std:    post_xlf.xlf['PROPOSED CofA'][i][50],
-                            TTV_min:    post_xlf.xlf['PROPOSED CofA'][i][51],
-                            TTV_max:    post_xlf.xlf['PROPOSED CofA'][i][52],
-                            TTV_USL:    post_xlf.xlf['PROPOSED CofA'][i][53],
-                            RA_ave: post_xlf.xlf['PROPOSED CofA'][i][54],
-                            RA_std: post_xlf.xlf['PROPOSED CofA'][i][55],
-                            RA_min: post_xlf.xlf['PROPOSED CofA'][i][56],
-                            RA_max: post_xlf.xlf['PROPOSED CofA'][i][57],
-                            RA_USL: post_xlf.xlf['PROPOSED CofA'][i][58],
-                            RZ_ave: post_xlf.xlf['PROPOSED CofA'][i][59],
-                            RZ_std: post_xlf.xlf['PROPOSED CofA'][i][60],
-                            RZ_min: post_xlf.xlf['PROPOSED CofA'][i][61],
-                            RZ_max: post_xlf.xlf['PROPOSED CofA'][i][62],
-                            RZ_USL: post_xlf.xlf['PROPOSED CofA'][i][63],
-                            VERTICAL_ave:   post_xlf.xlf['PROPOSED CofA'][i][64],
-                            VERTICAL_std:   post_xlf.xlf['PROPOSED CofA'][i][65],
-                            VERTICAL_min:   post_xlf.xlf['PROPOSED CofA'][i][66],
-                            VERTICAL_max:   post_xlf.xlf['PROPOSED CofA'][i][67],
-                            VERTICAL_USL:   post_xlf.xlf['PROPOSED CofA'][i][68],
-                            VERTICAL_LSL:   post_xlf.xlf['PROPOSED CofA'][i][69],
-                            Copper_content: post_xlf.xlf['PROPOSED CofA'][i][70],
-                            Iron_content:   post_xlf.xlf['PROPOSED CofA'][i][71],
-                            DoesAcceptorReject: post_xlf.xlf['PROPOSED CofA'][i][72]
-                        });
-                    
-                    }
-                }
-                
-                //  Ingot lot Barcode loop starting 2nd array
-                for(let i=1; i<post_xlf[0].Ingot_Lot_Barcodes.length; i++){
-                    if(typeof post_xlf[0].Ingot_Lot_Barcodes[i] !== 'undefined'){
-                        console.log(post_xlf[0].Ingot_Lot_Barcodes[i]);
-                        //  do something with the barcode obj
-                    }
-                }
-            } else {
-
-                res.send('Oops! Upload the required CofA File');
-                console.log('Oops! Upload the required CofA File');
-            }
-        */
-            
     }); 
-
     //  user registration page
     app.get('/register', function(req, res){
-        
+
+    });
+
+    //  index page
+    app.get('/', function(req, res){
+
     });
 
     //  admin page
     app.get('/admin', function(req, res){
 
     });
-
     //  get upload page
     app.get('/upload', function(req, res){
         //  get the supplier list
