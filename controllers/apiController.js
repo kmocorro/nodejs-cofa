@@ -38,7 +38,7 @@ module.exports = function(app){
                             order_no:   post_xlf.header[0]['value']
                         });
 
-                        //  check if there's existing order no
+                        //  check existing order no
                         mysqlCloud.getConnection(function(err, connection){
                             connection.query({
                                 sql: 'SELECT * FROM tbl_proposed_cofa WHERE order_no=?',
@@ -334,10 +334,12 @@ module.exports = function(app){
                                         ingot_barcode:  post_xlf.xlf['Ingot Lot Barcodes'][i][j]
                                     });
                                 }
-                            } else { // if there's missing ingot lot # 
+                            } 
+                                /* 1.1 PATCH - Missed row  
+                                else { // if there's missing ingot lot # 
                                 res.send(JSON.stringify('Error: Missing Ingot Lot # at barcode sheet'));
                                 reject('Error: Missing Ingot Lot # at barcode sheet');
-                            }
+                            } */
                         }
                         /* end of cleaning */
 
@@ -409,7 +411,7 @@ module.exports = function(app){
 
     //  index page
     app.get('/', function(req, res){
-
+        res.redirect('/upload'); // redirect for the meantime
     });
 
     //  admin page
