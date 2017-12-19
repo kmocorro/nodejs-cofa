@@ -4,6 +4,7 @@ let mysqlCloud = require('../dbconfig/configCloud').poolCloud;  //  we're going 
 let Promise = require('bluebird');
 let moment = require('moment');
 let xlsx = require('xlsx');
+let nodemailer = require('nodemailer'); // test
 
 module.exports = function(app){
     //  use bodyParser to parse out json with limit of 50mb
@@ -414,10 +415,51 @@ module.exports = function(app){
         res.redirect('/upload'); // redirect for the meantime
     });
 
-    //  admin page
+    //  admin page 
+    //  try nodemailer here
     app.get('/admin', function(req, res){
+        // mailer
+        nodemailer.createTestAccount((err, account) => {
+
+            //  reusable transporter obj using SMTP
+            let transporter = nodemailer.createTransport({
+                host: 'smtp-mail.outlook.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: 'f4automailer@sunpowercorp.com',
+                    pass: ''
+                },
+                tls: {
+            ciphers: 'SSLv3'
+        }
+            });
+
+            //  setup mail
+            let mailOptions = {
+                from: '"Auto Mailer"<f4automailer@sunpowercorp.com>', 
+                to: 'kmocorro@sunpowercorp.com',
+                subject: 'Hey from nodemailer',
+                text: 'Hello SPWR!',
+            };
+
+            //  send mail
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message sent: %s', info.messageID);
+                
+            });
+        });
+    });
+
+    //  kitting page
+    app.get('/kitting', function(req, res){
 
     });
+
     //  get upload page
     app.get('/upload', function(req, res){
         //  get the supplier list
