@@ -409,11 +409,151 @@ module.exports = function(app){
     app.post('/api/barcode', function(req, res){
         let post_barcode = req.body;
 
-        if(!post_barcode){
-            res.send('Please fill up the form');
-        } else {
-            res.send('ok');
+        function cleaner(){ // verify before cleaning
+            return new Promise(function(resolve, reject){
+                if(!post_barcode){
+                    res.send('Please fill up the form properly');
+                } else {
+                    if(!post_barcode.line){
+                        res.send('You can only select line between 17-22');
+                    } else {
+                        if(!post_barcode.lot_id){
+                            res.send('Missing Lot id');
+                        } else if (!post_barcode.qty){
+                            res.send('Missing Quantity');
+                        } else {
+                            if(post_barcode.qty > 400 && post_barcode.qty <= 500 ){
+                                if(!post_barcode.stack5_id1 || !post_barcode.stack5_id2 || !post_barcode.stack5_id3 || !post_barcode.stack5_id4 || !post_barcode.stack5_id5){
+                                    res.send('Incomplete stack ID of 5');
+                                } else {
+                                    if(post_barcode.stack5_id1.toUpperCase() == post_barcode.stack5_id2.toUpperCase() || post_barcode.stack5_id1.toUpperCase() == post_barcode.stack5_id3.toUpperCase() || post_barcode.stack5_id1.toUpperCase() == post_barcode.stack5_id4.toUpperCase() || post_barcode.stack5_id1.toUpperCase() == post_barcode.stack5_id5.toUpperCase() || post_barcode.stack5_id2.toUpperCase() == post_barcode.stack5_id3.toUpperCase() || post_barcode.stack5_id2.toUpperCase() == post_barcode.stack5_id4.toUpperCase() || post_barcode.stack5_id2.toUpperCase() == post_barcode.stack5_id5.toUpperCase() || post_barcode.stack5_id3.toUpperCase() == post_barcode.stack5_id4.toUpperCase() || post_barcode.stack5_id3.toUpperCase() == post_barcode.stack5_id5.toUpperCase() || post_barcode.stack5_id4.toUpperCase() == post_barcode.stack5_id5.toUpperCase()){
+                                        res.send('Duplicate stack ID is not allowed');
+                                    } else {
+                                        let cleaned_post_barcode = [];
+                                        
+                                        cleaned_post_barcode.push({
+                                            line: post_barcode.line,
+                                            lot_id: post_barcode.lot_id,
+                                            consume_date: new Date(),
+                                            box_no: [
+                                                post_barcode.stack5_id1,
+                                                post_barcode.stack5_id2,
+                                                post_barcode.stack5_id3,
+                                                post_barcode.stack5_id4,
+                                                post_barcode.stack5_id5
+                                            ] 
+                                        });
+                                        resolve(cleaned_post_barcode);
+                                    }
+                                }
+                            } else if(post_barcode.qty > 300 && post_barcode.qty <= 400 ){
+                                if(!post_barcode.stack4_id1 || !post_barcode.stack4_id2 || !post_barcode.stack4_id3 || !post_barcode.stack4_id4){
+                                    res.send('Incomple stack ID of 4');
+                                } else {
+                                    if(post_barcode.stack4_id1.toUpperCase() == post_barcode.stack4_id2.toUpperCase() || post_barcode.stack4_id1.toUpperCase() == post_barcode.stack4_id3.toUpperCase() || post_barcode.stack4_id1.toUpperCase() == post_barcode.stack4_id4.toUpperCase() || post_barcode.stack4_id2.toUpperCase() == post_barcode.stack4_id3.toUpperCase() || post_barcode.stack4_id2.toUpperCase() == post_barcode.stack4_id4.toUpperCase() || post_barcode.stack4_id3.toUpperCase() == post_barcode.stack4_id4.toUpperCase()){
+                                        res.send('Duplicate stack ID is not allowed');
+                                    } else {
+                                        let cleaned_post_barcode = [];
+                                        
+                                        cleaned_post_barcode.push({
+                                            line: post_barcode.line,
+                                            lot_id: post_barcode.lot_id,
+                                            consume_date: new Date(),
+                                            box_no: [
+                                                post_barcode.stack4_id1,
+                                                post_barcode.stack4_id2,
+                                                post_barcode.stack4_id3,
+                                                post_barcode.stack4_id4
+                                            ] 
+                                        });
+                                        resolve(cleaned_post_barcode);
+                                    }
+                                }
+                            } else if(post_barcode.qty > 200 && post_barcode.qty <= 300 ){
+                                if(!post_barcode.stack3_id1 || !post_barcode.stack3_id2 || !post_barcode.stack3_id3 ){
+                                    res.send('Incomplete stack ID of 3');
+                                } else {
+                                    if(post_barcode.stack3_id1.toUpperCase() == post_barcode.stack3_id2.toUpperCase() || post_barcode.stack3_id1.toUpperCase() == post_barcode.stack3_id3.toUpperCase() || post_barcode.stack3_id2.toUpperCase() == post_barcode.stack3_id3.toUpperCase() ){
+                                        res.send('Duplicate stack ID is not allowed');
+                                    } else {
+                                        let cleaned_post_barcode = [];
+                                        
+                                        cleaned_post_barcode.push({
+                                            line: post_barcode.line,
+                                            lot_id: post_barcode.lot_id,
+                                            consume_date: new Date(),
+                                            box_no: [
+                                                post_barcode.stack3_id1,
+                                                post_barcode.stack3_id2,
+                                                post_barcode.stack3_id3
+                                            ] 
+                                        });
+                                        resolve(cleaned_post_barcode);
+                                    }
+                                }
+                            } else if(post_barcode.qty > 100 && post_barcode.qty <= 200 ){
+                                if(!post_barcode.stack2_id1 || !post_barcode.stack2_id2 ){
+                                    res.send('Incomple stack ID of 2');
+                                } else {
+                                    if(post_barcode.stack2_id1.toUpperCase() == post_barcode.stack2_id2.toUpperCase() ){
+                                        res.send('Duplicate stack ID is not allowed');
+                                    } else {
+                                        let cleaned_post_barcode = [];
+                                        
+                                        cleaned_post_barcode.push({
+                                            line: post_barcode.line,
+                                            lot_id: post_barcode.lot_id,
+                                            consume_date: new Date(),
+                                            box_no: [
+                                                post_barcode.stack2_id1,
+                                                post_barcode.stack2_id2
+                                            ] 
+                                        });
+                                        resolve(cleaned_post_barcode);
+                                    }
+                                }
+                            } else if(post_barcode.qty <= 100 ){
+                                if(!post_barcode.stack1_id1){
+                                    res.send('Fill up the stack ID');
+                                } else {
+                                    let cleaned_post_barcode = [];
+                                    
+                                    cleaned_post_barcode.push({
+                                        line: post_barcode.line,
+                                        lot_id: post_barcode.lot_id,
+                                        consume_date: new Date(),
+                                        box_no: [
+                                            post_barcode.stack1_id1
+                                        ] 
+                                    });
+                                    resolve(cleaned_post_barcode);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
+
+        cleaner().then(function(cleaned_post_barcode){ // injoker
+           // verify if barcode exist at ingot_lot_barcodes table
+            mysqlCloud.getConnection(function(err, connection){
+                for(let i=0;i<cleaned_post_barcode[0].barcode.length;i++){
+                    connection.query({
+                        sql: 'SELECT ingot_lot_id FROM tbl_ingot_lot_barcodes WHERE bundle_barcode = ?',
+                        values: [cleaned_post_barcode[0].barcode[i]]
+                    }, function(err, results, fields){
+                        if(results){
+                            // if theres a result then what?
+                        }
+                    });
+                }
+                
+
+            });
+
+        });
+        
     });
 
     //  user registration page
@@ -434,7 +574,12 @@ module.exports = function(app){
 
     //  operator's page
     app.get('/barcode/:line', function(req, res){
-        res.render('barcode', { line: req.params.line });
+        if(req.params.line == '17' || req.params.line == '18'|| req.params.line == '19' || req.params.line == '20' || req.params.line == '21' || req.params.line == '22'  ){
+            res.render('barcode', { line: req.params.line });
+        } else {
+            res.render('404');
+        }
+       
     });
 
     //  get upload page

@@ -6,6 +6,7 @@ $('document').ready(function(){
     $('.stackOf3').hide();
     $('.stackOf2').hide();
     $('.stackOf1').hide();
+    $('.liner').hide();
 
     // check qty then display input boxes
     $('#qty').keyup(
@@ -52,6 +53,7 @@ $('document').ready(function(){
                 $('.stackOf3').hide();
                 $('.stackOf2').hide();
                 $('.stackOf1').hide();
+
             } else if(!qtyVal){
                 $('.stackOf5').hide();
                 $('.stackOf4').hide();
@@ -60,7 +62,7 @@ $('document').ready(function(){
                 $('.stackOf1').hide();
             }
         }
-    )
+    );
 
     /* validation */
     $('#barcode_form').validate({
@@ -69,7 +71,9 @@ $('document').ready(function(){
                 required: true
             },
             qty: {
-                required: true
+                required: true,
+                number: true,
+                max: '500' 
             },
             stacker1: {
                 required: true
@@ -90,7 +94,7 @@ $('document').ready(function(){
         },
         messages:{
             lot_id: "Please enter the Wafer Lot ID number",
-            qty: "Please enter same Quantity at the runcard",
+            qty: "Please enter same Quantity from the runcard (max: 500)",
             stacker1: "Please scan the required stack id",
             stacker2: "Please scan the required stack id",
             stacker3: "Please scan the required stack id",
@@ -99,14 +103,16 @@ $('document').ready(function(){
         },
         submitHandler: submitForm
     });
-
-    
     /* validation */
 
+
+    // go go go
     function submitForm(){	
 
         var data = $("#barcode_form").serialize();
 
+        console.log(data);
+        
         $.ajax({
             type: 'POST',
             url:  '/api/barcode',
@@ -118,22 +124,51 @@ $('document').ready(function(){
             },
             success: function(response){
                 //console.log(response);
-                if(response=="ok"){
+                if(response=="Form has been saved!"){
                     
 					$("#btn-barcode").html('Saving...');
                     $("#btn-barcode").prop("disabled",true);
-                    $("#xlf").prop("disabled",true);
                     $("#error").fadeIn(0, function(){						
                         $("#error").html('<div class="alert alert-success">'+response+' </div>');
                     });
                     $("#btn-barcode").html('Please wait...');
-                    setTimeout(' window.location.href="/barcode/17"; ',2000);
+                    setTimeout(' window.location.href="/barcode/17"; ',3000);
                 } else {
-                    $("#error").fadeIn(1000, function(){						
+                    $("#error").fadeIn(1000, function(){		
+                        $("#lot_id").val('');
+                        $("#qty").val('');
+                        
+                        $("#stack5_id1").val('');
+                        $("#stack5_id2").val('');
+                        $("#stack5_id3").val('');
+                        $("#stack5_id4").val('');
+                        $("#stack5_id5").val('');
+                        
+                        $("#stack4_id1").val('');
+                        $("#stack4_id2").val('');
+                        $("#stack4_id3").val('');
+                        $("#stack4_id4").val('');
+
+                        
+                        $("#stack3_id1").val('');
+                        $("#stack3_id2").val('');
+                        $("#stack3_id3").val('');
+
+                        $("#stack2_id1").val('');
+                        $("#stack2_id2").val('');
+
+                        $("#stack1_id1").val('');
+                        
+                        $("#stack5_id1").focus();
+                        $("#stack4_id1").focus();
+                        $("#stack3_id1").focus();
+                        $("#stack2_id1").focus();
+                        $("#stack1_id1").focus();
+
                         $("#error").html('<div class="alert alert-danger">'+response+' </div>'); 
                         $("#btn-barcode").prop("disabled",false);
-                        $("#xlf").prop("disabled",false);
                         $("#btn-barcode").html('Try again');
+                        
                         /*
                         let counter = 10;
                         let interval = setInterval(function(){

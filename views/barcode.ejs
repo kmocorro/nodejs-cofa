@@ -21,6 +21,9 @@
                 <h3>LINE <%= line %></h3>
                 <hr class="colorgraph">
                 <div class="header_div" style="padding-bottom:10px;">
+                    <div class="liner">
+                        <input type="text" class="form-control" id="line" name="line" value='<%= line %>'/>
+                    </div>
                     <div class="lot_id_div">
                         <!--onkeypress='return event.charCode >= 48 && event.charCode <= 57'-->
                         <h5>Lot ID:</h5> 
@@ -30,42 +33,45 @@
                         <h5>Quantity:</h5> 
                         <input type="text" class="form-control" id="qty" name="qty" onkeypress='return event.charCode >= 48 && event.charCode <= 57' placeholder="Lot size"/>
                     </div>
+                    
+                    <div id="error">
+                        <!-- error / success will be shown here -->
+                    </div>
+
                     <div class="stacks">
                         <div class="stackOf5">
                             <h5>Scan 5 stack IDs</h5>
-                            <input type="text" class="form-control" id="stack5_id1" name="stacker1"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack5_id2" name="stacker2"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack5_id3" name="stacker3"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack5_id4" name="stacker4"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack5_id5" name="stacker5"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack5_id1" name="stack5_id1"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack5_id2" name="stack5_id2"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack5_id3" name="stack5_id3"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack5_id4" name="stack5_id4"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack5_id5" name="stack5_id5"  placeholder="Stack ID"/>
                         </div>
                         <div class="stackOf4">
                             <h5>Scan 4 stack IDs</h5>
-                            <input type="text" class="form-control" id="stack4_id1" name="stacker1"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack4_id2" name="stacker2"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack4_id3" name="stacker3"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack4_id4" name="stacker4"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack4_id1" name="stack4_id1"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack4_id2" name="stack4_id2"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack4_id3" name="stack4_id3"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack4_id4" name="stack4_id4"  placeholder="Stack ID"/>
                         </div>
                         <div class="stackOf3">
                             <h5>Scan 3 stack IDs</h5>
-                            <input type="text" class="form-control" id="stack3_id1" name="stacker1"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack3_id2" name="stacker2"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack3_id3" name="stacker3"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack3_id1" name="stack3_id1"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack3_id2" name="stack3_id2"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack3_id3" name="stack3_id3"  placeholder="Stack ID"/>
                         </div>
                         <div class="stackOf2">
                             <h5>Scan 2 stack IDs</h5>
-                            <input type="text" class="form-control" id="stack2_id1" name="stacker1"  placeholder="Stack ID"/>
-                            <input type="text" class="form-control" id="stack2_id2" name="stacker2"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack2_id1" name="stack2_id1"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack2_id2" name="stack2_id2"  placeholder="Stack ID"/>
                         </div>
                         <div class="stackOf1">
                             <h5>Scan 1 stack ID</h5>
-                            <input type="text" class="form-control" id="stack1_id1" name="stacker1"  placeholder="Stack ID"/>
+                            <input type="text" class="form-control" id="stack1_id1" name="stack1_id1"  placeholder="Stack ID"/>
                         </div>
                     </div>
                     
                 </div>
-
-
                 <hr>
                 <div class="submit_div" style="padding-bottom: 20px;">
                     <button id="btn-barcode" class="btn btn-lg btn-primary btn-block" name="Submit" type="Submit" value="Save">Save</button>
