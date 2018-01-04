@@ -536,21 +536,7 @@ module.exports = function(app){
         }
 
         cleaner().then(function(cleaned_post_barcode){ // injoker
-           // verify if barcode exist at ingot_lot_barcodes table
-            mysqlCloud.getConnection(function(err, connection){
-                for(let i=0;i<cleaned_post_barcode[0].barcode.length;i++){
-                    connection.query({
-                        sql: 'SELECT ingot_lot_id FROM tbl_ingot_lot_barcodes WHERE bundle_barcode = ?',
-                        values: [cleaned_post_barcode[0].barcode[i]]
-                    }, function(err, results, fields){
-                        if(results){
-                            // if theres a result then what?
-                        }
-                    });
-                }
-                
-
-            });
+           
 
         });
         

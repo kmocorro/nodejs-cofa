@@ -1,0 +1,23 @@
+                        for(let i=0;i<cleaned_post_barcode[0].box_no.length;i++){
+                            connection.query({
+                                sql: 'SELECT ingot_lot_id FROM tbl_ingot_lot_barcodes WHERE bundle_barcode = ?',
+                                values: [cleaned_post_barcode[0].box_no[i]]
+                            }, function(err, results, fields){
+                                if(results){
+                                    connection.query({ // update ingot lot barcodes with consumed date and binding with lot id
+                                        sql: 'UPDATE tbl_ingot_lot_barcodes SET consume_date = ?, lot_id = ? WHERE bundle_barcode = ?',
+                                        values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].box_no[i]]
+                                    },  function(err, results, fields){
+                                    });
+        
+                                    connection.query({ // insert to consumed table
+                                        sql: 'INSERT INTO tbl_consumed_barcodes SET upload_date = ?, line = ?, lot_id = ?, barcode = ?',
+                                        values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].line,  cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].box_no[i]]
+                                    },  function(err, results, fields){
+                                    });
+        
+                                } else {
+                                  
+                                }
+                            });
+                        }   
