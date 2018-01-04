@@ -405,6 +405,17 @@ module.exports = function(app){
         }
         
     }); 
+
+    app.post('/api/barcode', function(req, res){
+        let post_barcode = req.body;
+
+        if(!post_barcode){
+            res.send('Please fill up the form');
+        } else {
+            res.send('ok');
+        }
+    });
+
     //  user registration page
     app.get('/register', function(req, res){
 
@@ -421,9 +432,9 @@ module.exports = function(app){
 
     });
 
-    //  kitting page
-    app.get('/kitting', function(req, res){
-
+    //  operator's page
+    app.get('/barcode/:line', function(req, res){
+        res.render('barcode', { line: req.params.line });
     });
 
     //  get upload page
