@@ -105,6 +105,10 @@ $('document').ready(function(){
     });
     /* validation */
 
+    $('#qty').on('click', function(){
+        $('#error').fadeOut();
+    });
+
 
     // go go go
     function submitForm(){	
@@ -135,7 +139,6 @@ $('document').ready(function(){
                     setTimeout(' window.location.href="/barcode/17"; ',3000);
                 } else {
                     $("#error").fadeIn(1000, function(){		
-                        $("#lot_id").val('');
                         $("#qty").val('');
                         
                         $("#stack5_id1").val('');
@@ -158,12 +161,15 @@ $('document').ready(function(){
                         $("#stack2_id2").val('');
 
                         $("#stack1_id1").val('');
+
+                        $("#qty").focus();
                         
-                        $("#stack5_id1").focus();
-                        $("#stack4_id1").focus();
-                        $("#stack3_id1").focus();
-                        $("#stack2_id1").focus();
-                        $("#stack1_id1").focus();
+                        $('.stackOf5').hide();
+                        $('.stackOf4').hide();
+                        $('.stackOf3').hide();
+                        $('.stackOf2').hide();
+                        $('.stackOf1').hide();
+                        
 
                         $("#error").html('<div class="alert alert-danger">'+response+' </div>'); 
                         $("#btn-barcode").prop("disabled",false);
