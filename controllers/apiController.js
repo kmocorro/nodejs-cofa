@@ -542,6 +542,7 @@ module.exports = function(app){
 
                     mysqlCloud.getConnection(function(err, connection){
                     
+                        // 2017-01-05 make a way to pass through the array before resolving
                         for(let i=0;i<cleaned_post_barcode[0].bundle_barcode.length;i++){
                             connection.query({
                                 sql: 'SELECT * FROM tbl_ingot_lot_barcodes WHERE bundle_barcode = ?',
