@@ -4,7 +4,7 @@ let mysqlCloud = require('../dbconfig/configCloud').poolCloud;  //  we're going 
 let Promise = require('bluebird');
 let moment = require('moment');
 let xlsx = require('xlsx');
-let nodemailer = require('nodemailer'); // test
+let async = require('async');
 
 module.exports = function(app){
     //  use bodyParser to parse out json with limit of 50mb
@@ -536,10 +536,53 @@ module.exports = function(app){
         }
 
         cleaner().then(function(cleaned_post_barcode){ // injoker
-            
-            function ingotTable_checker(){
-                return new Promise(function(resolve, reject){
 
+            function doesExist(){
+                return new Promise(function(resolve, reject){
+                    mysqlCloud.getConnection(function(err, connection){
+                        let x = 0; // barcode checker before resolve this saves me after 3 days. solution came to my mind while commuting lol.
+                        let doesExist_obj=[];
+
+                        for(let i=0;i<cleaned_post_barcode[0].bundle_barcode.length;i++){
+                            connection.query({
+                                sql: 'SELECT DISTINCT(bundle_barcode) FROM tbl_ingot_lot_barcodes WHERE bundle_barcode = ?',
+                                values: [cleaned_post_barcode[0].bundle_barcode[i]]
+                            },  function(err, results, fields){
+
+                                if(typeof results[0] != 'undefined' || results[0] != null){
+                                    x++; // increment maybe?
+
+                                    doesExist_obj.push(
+                                        results[0].bundle_barcode
+                                    );
+
+                                    if(x == cleaned_post_barcode[0].bundle_barcode.length){ // resolve if reached the length
+                                        resolve(doesExist_obj);
+                                    }
+
+                                } else {
+                                    resolve(doesExist_obj);
+                                }
+
+                            });
+                        }
+                    connection.release();
+                    });
+                });
+            }
+            
+
+            return doesExist().then(function(doesExist_obj){
+                if(doesExist_obj.length == cleaned_post_barcode[0].bundle_barcode.length){
+                    console.log(doesExist_obj);
+                    res.send('Form has been saved!');
+                } else {
+                    res.send('Stack ID does not exists');
+                }
+            });
+            
+            
+            /*
                     mysqlCloud.getConnection(function(err, connection){
                     
                         // 2017-01-05 make a way to pass through the array before resolving
@@ -549,59 +592,15 @@ module.exports = function(app){
                                 values: [cleaned_post_barcode[0].bundle_barcode[i]]
                             },  function(err, results, fields){
                                 if(typeof results[0] == 'undefined' || results[0] == null){
-                                    let ingotTableStatus = 'undefined';
-                                    resolve(ingotTableStatus);
+                                    res.send('Stack ID is not in the database. Contact yield department');
                                 } else {
-                                    let ingotTableStatus = 'ingotTable passed';
-                                    resolve(ingotTableStatus);
-                                }
-                            });
-                        }
-                        connection.release();
-                    });
-
-                });
-            }
-
-            return ingotTable_checker().then(function(ingotTableStatus){
-
-                if(ingotTableStatus == 'ingotTable passed'){
-
-                    function consumedTable_checker(){
-                        return new Promise(function(resolve, reject){
-    
-                            mysqlCloud.getConnection(function(err, connection){
-                                
-                                for(let i=0;i<cleaned_post_barcode[0].bundle_barcode.length;i++){
                                     connection.query({
                                         sql: 'SELECT * FROM tbl_consumed_barcodes WHERE barcode = ?',
                                         values: [cleaned_post_barcode[0].bundle_barcode[i]]
                                     },  function(err, results, fields){
-                                        console.log(results);
-                                        if( typeof results[0] == 'undefined' || results[0] == null || results.length < 0 ){
-                                            let consumedTableStatus = 'consumedTable passed';
-                                            resolve(consumedTableStatus);
-                                        } else if( results[0].barcode == cleaned_post_barcode[0].bundle_barcode ){
-                                            let consumedTableStatus = 'exists';
-                                            resolve(consumedTableStatus);
-                                        }
-    
-                                    });
-                                }
-                                connection.release();
-                            });
-    
-                        });
-                    }
-
-                    return consumedTable_checker().then(function(consumedTableStatus){
-
-                        if(consumedTableStatus == 'consumedTable passed'){ 
-                            function updater(){
-                                return new Promise(function(resolve, reject){
-        
-                                    mysqlCloud.getConnection(function(err, connection){
-                                        for(let i=0;i<cleaned_post_barcode[0].bundle_barcode.length;i++){
+                                        if( typeof results[0] != 'undefined' || results[0] != null || results.length > 0 ){
+                                            res.send('Stack ID has already been bind to lot ID. Use other stack ID');
+                                        } else {
                                             connection.query({
                                                 sql: 'INSERT INTO tbl_consumed_barcodes SET upload_date = ?, line = ?, lot_id = ?, barcode = ?',
                                                 values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].line, cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].bundle_barcode[i]]
@@ -613,27 +612,19 @@ module.exports = function(app){
                                                 values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].bundle_barcode[i]]
                                             },  function(err, results, fields){
                                             });
+
+                                            
+                                            
                                         }
-                                        connection.release();
-                                        res.send('Form has been saved!');
     
                                     });
-        
-                                });
-                            }
-
-                            return updater();
-                        } else {
-                            res.send('Stack ID already exists');
+                                }
+                            });
                         }
-    
+                        
+                        connection.release();
                     });
-
-                } else {
-                    res.send('Stack ID is not in the database. Please contact Yield department');
-                }
-                
-            });
+                    */
 
             // 2018-01-05 // BUG ON THE LOOP OF CLEANED_POST_BARCODE
 
