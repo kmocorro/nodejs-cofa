@@ -406,6 +406,7 @@ module.exports = function(app){
         
     }); 
 
+    //  barcode lot binder
     app.post('/api/barcode', function(req, res){
         let post_barcode = req.body;
 
@@ -561,6 +562,7 @@ module.exports = function(app){
                                     }
 
                                 } else {
+
                                     resolve(doesExist_obj);
                                 }
 
@@ -574,91 +576,75 @@ module.exports = function(app){
 
             return doesExist().then(function(doesExist_obj){
                 if(doesExist_obj.length == cleaned_post_barcode[0].bundle_barcode.length){
-                    console.log(doesExist_obj);
-                    res.send('Form has been saved!');
-                } else {
-                    res.send('Stack ID does not exists');
-                }
-            });
-            
-            
-            /*
-                    mysqlCloud.getConnection(function(err, connection){
                     
-                        // 2017-01-05 make a way to pass through the array before resolving
-                        for(let i=0;i<cleaned_post_barcode[0].bundle_barcode.length;i++){
-                            connection.query({
-                                sql: 'SELECT * FROM tbl_ingot_lot_barcodes WHERE bundle_barcode = ?',
-                                values: [cleaned_post_barcode[0].bundle_barcode[i]]
-                            },  function(err, results, fields){
-                                if(typeof results[0] == 'undefined' || results[0] == null){
-                                    res.send('Stack ID is not in the database. Contact yield department');
-                                } else {
-                                    connection.query({
-                                        sql: 'SELECT * FROM tbl_consumed_barcodes WHERE barcode = ?',
-                                        values: [cleaned_post_barcode[0].bundle_barcode[i]]
-                                    },  function(err, results, fields){
-                                        if( typeof results[0] != 'undefined' || results[0] != null || results.length > 0 ){
-                                            res.send('Stack ID has already been bind to lot ID. Use other stack ID');
-                                        } else {
-                                            connection.query({
-                                                sql: 'INSERT INTO tbl_consumed_barcodes SET upload_date = ?, line = ?, lot_id = ?, barcode = ?',
-                                                values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].line, cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].bundle_barcode[i]]
-                                            }, function(err, results, fields){
-                                            });
-                
-                                            connection.query({
-                                                sql: 'UPDATE tbl_ingot_lot_barcodes SET consume_date = ?, lot_id = ? WHERE bundle_barcode = ?',
-                                                values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].bundle_barcode[i]]
-                                            },  function(err, results, fields){
-                                            });
+                    function doesNotUsedAlready(){
+                        return new Promise(function(resolve, reject){
+                            mysqlCloud.getConnection(function(err, connection){
+                                let x = 0;
+                                let doesNotUsedAlready_obj=[];
 
-                                            
-                                            
+                                for(let i=0;i<doesExist_obj.length;i++){
+                                    connection.query({
+                                        sql: 'SELECT DISTINCT(barcode) FROM tbl_consumed_barcodes WHERE barcode = ?',
+                                        values: [doesExist_obj[i]]
+                                    },  function(err, results, fields){
+
+                                        if(typeof results[0] == 'undefined' || results[0] == null){
+                                            x++;
+
+                                            doesNotUsedAlready_obj.push(
+                                                doesExist_obj[i]
+                                            );
+
+                                            if(x == doesExist_obj.length){
+                                                resolve(doesNotUsedAlready_obj);
+                                            }
+
+                                        } else {
+
+                                            resolve(doesNotUsedAlready_obj);
                                         }
-    
                                     });
                                 }
+
+                            connection.release();
                             });
+
+                        });
+                    }
+
+                    
+                    return doesNotUsedAlready().then(function(doesNotUsedAlready_obj){
+                        if(doesNotUsedAlready_obj.length == doesExist_obj.length){
+                            
+                            mysqlCloud.getConnection(function(err, connection){
+                                for(let i=0;i<doesNotUsedAlready_obj.length;i++){
+                                    connection.query({
+                                        sql: 'UPDATE tbl_ingot_lot_barcodes SET consume_date = ?, lot_id = ? WHERE bundle_barcode = ?',
+                                        values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].lot_id, doesNotUsedAlready_obj[i]]
+                                    },  function(err, results, fields){
+                                    });
+
+                                    connection.query({
+                                        sql: 'INSERT INTO tbl_consumed_barcodes SET upload_date = ?, line = ?, lot_id = ?, barcode = ?',
+                                        values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].line, cleaned_post_barcode[0].lot_id, doesNotUsedAlready_obj[i]]
+                                    },  function(err, results, fields){
+                                    });
+                                }
+                            connection.release();
+                            res.send('Form has been saved!');
+                            });
+                            
+                        } else {
+                            res.send('Stack ID already used. Try different Stack ID.');
                         }
-                        
-                        connection.release();
                     });
-                    */
-
-            // 2018-01-05 // BUG ON THE LOOP OF CLEANED_POST_BARCODE
-
-            /*
-            return shouldNotbe().then(function(gg){
-                if(gg == 'good'){
-                    console.log('gg is good');
-                    // upload
-                    mysqlCloud.getConnection(function(err, connection){
-                        for(let i=0;i<cleaned_post_barcode[0].bundle_barcode.length;i++){
-                            connection.query({
-                                sql: 'INSERT INTO tbl_consumed_barcodes SET upload_date = ?, line = ?, lot_id = ?, barcode = ?',
-                                values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].line, cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].bundle_barcode[i]]
-                            }, function(err, results, fields){
-                            });
-
-                            connection.query({
-                                sql: 'UPDATE tbl_ingot_lot_barcodes SET consume_date = ?, lot_id = ? WHERE bundle_barcode = ?',
-                                values: [cleaned_post_barcode[0].consume_date, cleaned_post_barcode[0].lot_id, cleaned_post_barcode[0].bundle_barcode[i]]
-                            },  function(err, results, fields){
-                            });
-                        }
-                        connection.release();
-                        res.send('Form has been saved!');
-                    });
-
-                } else if(gg == 'undefined'){
-                    res.send('Stack ID is not in the database. Please contact Yield department');
-                } else if(gg == 'exists'){
-                    res.send('Stack ID already exists');
+                    
+                } else {
+                    res.send('Stack ID does not exists. If you believe it is correct, ask Yield team to upload CofA.');
                 }
             });
-            */
-
+            
         });
         
     });
